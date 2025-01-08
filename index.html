@@ -2,80 +2,21 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>外部JSONデータ表示</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-      }
-      .question-container {
-        margin: 20px;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-      }
-      .options {
-        margin-top: 10px;
-      }
-      .options li {
-        list-style-type: none;
-        margin: 5px 0;
-      }
-    </style>
+    <title>ランダムな質問と選択肢</title>
+    <link rel="stylesheet" href="stylesheet.css" />
   </head>
   <body>
-    <h1>JSONデータ表示</h1>
-    <div id="content">読み込み中...</div>
+    <div id="content">データを読み込んでいます...</div>
 
-    <script>
-      // 外部JSONファイルのパス
-      const jsonFilePath = "questions.json";
+    <!-- モーダルウィンドウ -->
+    <div id="resultModal" class="modal">
+      <div class="modal-content">
+        <span id="closeModal" class="close-button">&times;</span>
+        <p id="resultMessage"></p>
+        <button id="nextQuestionButton" class="option-button">次の質問</button>
+      </div>
+    </div>
 
-      // JSONデータをHTMLに表示する関数
-      function displayData(data) {
-        const contentDiv = document.getElementById("content");
-        contentDiv.innerHTML = ""; // 内容をクリア
-
-        const questionContainer = document.createElement("div");
-        questionContainer.classList.add("question-container");
-
-        questionContainer.innerHTML = `
-                <h2>質問番号: ${data.no}</h2>
-                <p><strong>${data.class1}</strong></p>
-                <p><strong>${data.class2}</strong></p>
-                <p>${data.text}</p>
-                <ul class="options">
-                    ${data.options
-                      .map(
-                        (option, index) =>
-                          `<li>${String.fromCharCode(
-                            65 + index
-                          )}. ${option}</li>`
-                      )
-                      .join("")}
-                </ul>
-                <p><strong>答え:</strong> ${data.answer}</p>
-            `;
-
-        contentDiv.appendChild(questionContainer);
-      }
-
-      // 外部JSONファイルを読み込む
-      fetch(jsonFilePath)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("JSONファイルの読み込みに失敗しました。");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          displayData(data);
-        })
-        .catch((error) => {
-          const contentDiv = document.getElementById("content");
-          contentDiv.innerHTML = `<p style="color: red;">エラー: ${error.message}</p>`;
-        });
-    </script>
+    <script src="script.js" defer></script>
   </body>
 </html>

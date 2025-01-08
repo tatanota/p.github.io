@@ -9,12 +9,23 @@
     <div id="content">データを読み込んでいます...</div>
 
     <!-- モーダルウィンドウ -->
-    <div id="resultModal" class="modal">
+    <div id="resultModal" class="modal" style="display: none">
       <div class="modal-content">
         <span id="closeModal" class="close-button">&times;</span>
         <p id="resultMessage"></p>
         <button id="nextQuestionButton" class="option-button">次の質問</button>
       </div>
+    </div>
+
+    <!-- 間違えた問題一覧のボタン -->
+    <button onclick="showIncorrectQuestions()">間違えた問題を表示</button>
+
+    <!------------------------------------------------------------------------------>
+    <!-- 間違えた問題一覧ページ -->
+    <div id="incorrectQuestionsPage" style="display: none">
+      <h2>間違えた問題一覧</h2>
+      <ul id="incorrectQuestionsList"></ul>
+      <button onclick="goBack()">戻る</button>
     </div>
 
     <script src="script.js" defer></script>

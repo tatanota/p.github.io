@@ -1,57 +1,54 @@
-// 外部JSONファイルを非同期で取得
-fetch("questions.json")
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error("HTTPエラー: " + response.status);
-    }
-    return response.json();
-  })
-  .then((jsonData) => {
-    if (Array.isArray(jsonData)) {
-      const randomIndex = Math.floor(Math.random() * jsonData.length);
-      const question = jsonData[randomIndex];
 
-      if (question.options && Array.isArray(question.options)) {
-        displayQuestion(question);
-      } else {
-        console.error("options プロパティが無効または配列ではありません");
-      }
-    } else {
-      console.error("jsonData は配列ではありません");
-    }
-  })
-  .catch((error) => {
-    console.error("JSONの読み込みに失敗しました:", error);
-    document.getElementById("content").innerHTML =
-      "JSONの読み込みに失敗しました。";
-  });
+let questionCount = 0;// 質問数をカウントする変数
+let incorrectQuestions = [];
+let selectedAnswer = '';  // ユーザーの選択を記録
+let correctAnswersCount = 0;// 正解した数をカウントする変数
 
 // -----------------------------------------------------
-// 質問数をカウントする変数
-let questionCount = 0;
+// 外部JSONファイルを非同期で取得
+function loadNextQuestion() {
+  fetch("questions.json")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("HTTPエラー: " + response.status);
+      }
+      return response.json();
+    })
+    .then((jsonData) => {
+      if (Array.isArray(jsonData)) {
+        const randomIndex = Math.floor(Math.random() * jsonData.length);
+        const question = jsonData[randomIndex];
+        displayQuestion(question);
+      } else {
+        console.error("jsonData は配列ではありません");
+      }
+    })
+    .catch((error) => {
+      console.error("次の質問の読み込みに失敗しました:", error);
+    });
+}
 
+// -----------------------------------------------------
 // 質問を表示する処理
 function displayQuestion(question) {
   questionCount++; // 質問数をカウント
 
   const contentDiv = document.getElementById("content");
   contentDiv.innerHTML = `
-    <h5>${question.class1}</h5>
-    <h5>${question.class2}</h5>
+    <h5>${question.class1}　　${question.class2}</h5>
     <h5>問題番号: ${question.no}</h5>
-    <h2>第: ${questionCount}問目</h2>
+    <h2>第: ${questionCount}問目　　正答数：${correctAnswersCount}/${questionCount}</h2>
     <br>
     <p>${question.text}</p>
     <br>
     <ul id="options"></ul>
     <button id="submitButton" class="option-button" disabled>回答する</button>
-
   `;
 
   const optionsDiv = document.getElementById("options");
   const optionLabels = ["A", "B", "C", "D"];
 
-  // 選択肢をシャッフルし、正解のラベルを再設定
+  // 選択肢をシャッフルし、新しい正解のラベルを再設定
   const { shuffledOptions, newAnswerLabel } = shuffleOptionsAndSetAnswer(
     question.options,
     question.answer
@@ -73,7 +70,7 @@ function displayQuestion(question) {
 
   // 回答ボタンのクリックイベント
   document.getElementById("submitButton").onclick = () =>
-    handleSubmit({ ...question, answer: newAnswerLabel });
+    handleSubmit(question, newAnswerLabel);
 }
 
 // -----------------------------------------------------
@@ -123,14 +120,17 @@ function handleOptionClick(label, option, correctAnswer) {
     selectedButton.style.border = "2px solid blue"; // ボーダーを強調
   }
 
-  console.log(`選択: ${label} - ${option}`);
+  console.log(`選択: ${label} - ${option}`);//デバッグ
 }
 
 // -----------------------------------------------------
-// 回答ボタンがクリックされたときの処理
-function handleSubmit(question) {
+// 回答が送信されたときの処理
+function handleSubmit(question, selectedAnswer) {
   const resultModal = document.getElementById("resultModal");
   const resultMessage = document.getElementById("resultMessage");
+
+  console.log(`選択: ${selectedAnswer}`); // デバッグ
+  console.log(`正解: ${question.answer}`); // デバッグ
 
   const message =
     selectedAnswer === question.answer
@@ -138,60 +138,54 @@ function handleSubmit(question) {
       : `不正解です。正しい答えは "${question.answer}" でした。`;
 
   resultMessage.textContent = message;
-
-  // モーダルを表示
   resultModal.style.display = "block";
 
-  // モーダルを閉じるイベント
-  document.getElementById("closeModal").onclick = () => {
+  // 正解した場合はカウントを増やす
+  if (selectedAnswer === question.answer) {
+    correctAnswersCount++;
+  }
+
+  // 間違えた問題を記録
+  if (selectedAnswer !== question.answer) {
+    incorrectQuestions.push(question);
+  }
+
+  // 次の質問に進む
+  document.getElementById("nextQuestionButton").onclick = () => {
     resultModal.style.display = "none";
-  };
-
-  // モーダル外をクリックで閉じる
-  window.onclick = (event) => {
-    if (event.target === resultModal) {
-      resultModal.style.display = "none";
-    }
-  };
-}
-
-// -----------------------------------------------------
-// モーダル内の「次の質問」ボタンをセットアップ
-function setupNextQuestionButton() {
-  const nextQuestionButton = document.getElementById("nextQuestionButton");
-  nextQuestionButton.onclick = () => {
-    // モーダルを非表示にする
-    const resultModal = document.getElementById("resultModal");
-    resultModal.style.display = "none";
-
-    // 次の質問をロード
     loadNextQuestion();
   };
 }
 
 // -----------------------------------------------------
-// 次の質問をロードする処理
-function loadNextQuestion() {
-  fetch("questions.json")
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("HTTPエラー: " + response.status);
-      }
-      return response.json();
-    })
-    .then((jsonData) => {
-      if (Array.isArray(jsonData)) {
-        const randomIndex = Math.floor(Math.random() * jsonData.length);
-        const question = jsonData[randomIndex];
-        displayQuestion(question);
-      } else {
-        console.error("jsonData は配列ではありません");
-      }
-    })
-    .catch((error) => {
-      console.error("次の質問の読み込みに失敗しました:", error);
-    });
+// 間違えた問題一覧ページを表示
+function showIncorrectQuestions() {
+  const incorrectQuestionsList = document.getElementById("incorrectQuestionsList");
+  incorrectQuestionsList.innerHTML = ""; // リストをクリア
+
+  incorrectQuestions.forEach((question) => {
+    const li = document.createElement("li");
+    li.textContent = `${question.no} ：${question.text} (選択した答え: ${question.answer})`;
+    incorrectQuestionsList.appendChild(li);
+  });
+
+  // 現在のページを非表示にして、間違えた問題一覧ページを表示
+  document.getElementById("content").style.display = "none";
+  document.getElementById("incorrectQuestionsPage").style.display = "block";
 }
 
-// モーダル内の「次の質問」ボタンをセットアップ
-setupNextQuestionButton();
+// -----------------------------------------------------
+// 戻るボタンの処理
+function goBack() {
+  // 現在のページを非表示にして、元のページを表示
+  document.getElementById("incorrectQuestionsPage").style.display = "none";
+  document.getElementById("content").style.display = "block";
+}
+
+// モーダルを閉じる処理
+document.getElementById("closeModal").onclick = () => {
+  document.getElementById("resultModal").style.display = "none";
+};
+
+// 初期状態で質問を表示
+loadNextQuestion();
